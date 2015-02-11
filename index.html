@@ -176,7 +176,7 @@
 
 					var result = $.ajax({
 						type: "GET",   
-						url: "webservice/addservice.php?name=" + name + "&description=" + description + "&adress=" + adress + "&latitude=" + latitude + "&longitude=" + longitude + "&tags=" + tags,
+						url: "http://5.196.226.178/googlemapsexample/webservice/addservice.php?name=" + name + "&description=" + description + "&adress=" + adress + "&latitude=" + latitude + "&longitude=" + longitude + "&tags=" + tags,
 						async: false
 					});
 
@@ -194,7 +194,7 @@
 
 				var result = eval('(' + $.ajax({
 					type: "GET",   
-					url: "webservice/search.php?value=" + data.searchvalue + "&ray=" + data.searchray,
+					url: "http://5.196.226.178/googlemapsexample/webservice/search.php?value=" + data.searchvalue + "&ray=" + data.searchray,
 					async: false,
 				}).responseText + ')');
 
