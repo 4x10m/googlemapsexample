@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+
+		<title>Acceuil</title>
+
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+
+		<link rel="stylesheet" href="js/jquery-ui/jquery-ui.css">
+
+		<script type="text/javascript" langage="javascript" src="js/jquery.js"></script>
+		<script type="text/javascript" langage="javascript" src="js/jquery-ui/jquery-ui.js"></script>
+
+		<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=false&libraries=geometry"></script>
+	</head>
+
+	<body>
+		<div id="tabs">
+			<ul>
+				<li id="addservicetabtitle"><a href="#tabs-1">Ajouter un service</a></li>
+				<li id="searchtabletitle"><a href="#tabs-2">Rechercher</a></li>
+			</ul>
+
+			<div id="tabs-1">
+				<div id="addservicemessage"></div>
+
+				<input type="text" id="name" placeholder="Nom"/>
+				<input type="text" id="description" placeholder="Description"/>
+				<input type="text" id="adress" placeholder="Adresse"/>
+				<input type="text" id="latitude" placeholder="Latitude"/>
+				<input type="text" id="longitude" placeholder="Longitude"/>
+				<input type="text" id="tags" placeholder="Tags"/>
+
+				<input type="button" id="submit" value="enregistrer"/>
+			</div>
+
+			<div id="tabs-2">
+				<div id="search-tools">
+					<div id="map-message"></div>
+					<input type="text" id="searchbar" placeholder="Rechercher..."/>
+					<input type="text" id="searchray" placeholder="Rayon"/>
+				</div>
+
+				<div id="element-wrapper"></div>
+			</div>
+		</div>
+
+		<div id="map">
+			<div id="map-canvas"></div>
+		</div>
+
+		<script type="text/javascript">
+			(function() {
+			    var ev = new $.Event('classadded'),
+			        orig = $.fn.addClass;
+			    $.fn.addClass = function() {
+			        $(this).trigger(ev, arguments);
+			        return orig.apply(this, arguments);
+			    }
+			})();
+
+			$(document).ready(function() {
+				var data = {
+					map: new google.maps.Map(
+						document.getElementById('map-canvas'),
+						{
+							zoom: 8,
+							center: new google.maps.LatLng(0, 0)
+						}
+					),
+					addservicemarker: undefined,
+					searchmarkers: new Array(),
+					maplistener: undefined,
+					searchray: 10,
+					searchvalue: ""
+				}
+
+				setLocation(data.map);
+
+				//initialize jquery tabs
+				$(function() {
+   					$( "#tabs" ).tabs();
+ 				});
+
+				//event for searching
+				$("#searchbar").keyup(function() {
+					data.searchvalue = $("#searchbar").val();
+
+					search(data);
+				});
+
+				$("#searchray").keyup(function() {
+					data.searchray = $("#searchray").val();
+
+					search(data);
+				});
+
+				//hook tag class adding
+				$('#addservicetabtitle').on('classadded', function(ev, newClasses) {
+					console.log(newClasses);
+
+					if(newClasses == "ui-tabs-active ui-state-active") {
+						if(data.maplistener !== undefined) {
+							google.maps.event.removeListener(data.maplistener);
+						}
+
+						if(data.searchmarkers.length > 0) {
+							for(var i in data.searchmarkers) {
+								data.searchmarkers[i].setMap(null);
+							}
+
+							data.searchmarkers = new Array();
+						}
+
+						data.maplistener = google.maps.event.addListener(data.map, 'click', function(event) {
+							var geocoder = new google.maps.Geocoder();
+
+							if(data.addservicemarker !== undefined) {
+								data.addservicemarker.setMap(null);
+
+								data.addservicemarker = undefined;
+							}
+
+							data.addservicemarker = new google.maps.Marker({
+					   	 		position: event.latLng,
+					    		map: data.map,
+							});
+
+							console.log('click ' + event.latLng);
+
+							$('#latitude').val(event.latLng.lat());
+							$('#longitude').val(event.latLng.lng());
+
+							geocoder.geocode({ 'latLng': event.latLng }, function(results, status) {
+	    						if (status == google.maps.GeocoderStatus.OK) {
+	      							if (results[0]) {
+	      								$('#adress').val(results[0].formatted_address);
+	      							} else {
+										alert('No results found');
+									}
+								} else {
+									alert('Geocoder failed due to: ' + status);
+								}
+							});
+						});
+					}
+				});
+
+				$('#searchtabletitle').on('classadded', function(ev, newClasses) {
+					if(newClasses == "ui-tabs-active ui-state-active") {
+						if(data.maplistener !== undefined) {
+							google.maps.event.removeListener(data.maplistener);
+						}
+
+						if(data.addservicemarker !== undefined) {
+							data.addservicemarker.setMap(null);
+
+							data.addservicemarker = undefined;
+						}
+
+						console.log(data);
+
+						search(data);
+					}
+				});
+
+				//submit button click event
+				$("#submit").click(function() {
+					var name = $("#name").val();
+					var description = $("#description").val();
+					var adress = $("#adress").val();
+					var latitude = $("#latitude").val();
+					var longitude = $("#longitude").val();
+					var tags = $("#tags").val();
+
+					var result = $.ajax({
+						type: "GET",   
+						url: "webservice/addservice.php?name=" + name + "&description=" + description + "&adress=" + adress + "&latitude=" + latitude + "&longitude=" + longitude + "&tags=" + tags,
+						async: false
+					});
+
+					if(result.status) {
+						$('#addservicemessage').html("Service ajouté");
+					}
+					else {
+
+					}
+				});
+			});
+
+			function search(data) {
+				console.log(data);
+
+				var result = eval('(' + $.ajax({
+					type: "GET",   
+					url: "webservice/search.php?value=" + data.searchvalue + "&ray=" + data.searchray,
+					async: false,
+				}).responseText + ')');
+
+				if(result.status && result.values.length > 0) {
+					data.searchmarkers = new Array();
+
+					if(navigator.geolocation) {
+						navigator.geolocation.getCurrentPosition(function(position) {
+							var location = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+							console.log("location" + location);
+
+							$("#element-wrapper").html("");
+
+							for(var i in result.values) {
+								var resultlocation = new google.maps.LatLng(result.values[i].latitude, result.values[i].longitude);
+
+								var distanceKm = google.maps.geometry.spherical.computeDistanceBetween(location, resultlocation) / 1000;
+
+								if(distanceKm < data.searchray) {
+									var image = new google.maps.MarkerImage('http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=' + i + '|FF0000|000000',
+					                      new google.maps.Size(20, 34),
+					                      new google.maps.Point(0, 0),
+					                      new google.maps.Point(10, 34)
+					                );
+
+									var marker = new google.maps.Marker({
+										icon: image,
+							   	 		position: resultlocation,
+							    		map: data.map,
+									});
+
+									$("#element-wrapper").html($("#element-wrapper").html() + '<div class="element" id="' + i + '"><div class="element-header"><div class="element-id">' + i + '</div><div class="element-title">' + result.values[i].name + '</div></div><div class="element-content"><div class="element-description">Description : ' + result.values[i].description + '</div><div class="element-adress">Addresse : ' + result.values[i].adress + '</div><div class="element-tags">Tags : ' + result.values[i].tags + '</div></div><div class="element-distance">Distance : ' + distanceKm.toFixed(2) + ' km</div></div>');
+
+									console.log(data.searchmarkers);
+
+									data.searchmarkers.push(marker);
+								}
+							}
+
+							$('.element').click(function() {
+								var id = $(this).attr('id');
+
+								console.log('element click ' + id);
+
+								data.map.setCenter(new google.maps.LatLng(result.values[id].latitude, result.values[id].longitude));
+							});
+						}, function() {
+							$('#map-message').html('Geolocalisation not supported');
+
+							console.log("no geolocation");
+	    				});
+					} else {
+						$('#map-message').html('Geolocalisation not supported');
+
+						console.log("no geolocation");
+					}
+				}
+				else {
+					$('#map-message').html('Pas de résultat');
+
+					console.log('no result', data.searchvalue, data.searchray);
+				}
+			}
+
+			function setLocation(map) {
+				if(navigator.geolocation) {
+					navigator.geolocation.getCurrentPosition(function(position) {
+						var pos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+						console.log("location" + pos);
+
+						map.setCenter(pos);
+					}, function() {
+						$('#map-message').html('Geolocalisation not supported');
+
+						console.log("no geolocation");
+    				});
+				} else {
+					$('#map-message').html('Geolocalisation not supported');
+
+					console.log("no geolocation");
+				}
+			}
+		</script>
+	</body>
+</html>

@@ -1,0 +1,95 @@
+html {
+	height: 100%;
+	margin: 0;
+}
+
+body {
+	height: 100%;
+	margin: 0;
+}
+
+#map {
+	height: 100%;
+}
+
+#map-canvas {
+	height: 100%;
+}
+
+input {
+	display: block;
+	margin-right: 0;
+	margin-left: auto;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	width: 100%;
+	height: 30px;
+}
+
+input[type="button"] {
+	height: 40px;
+}
+
+#tabs {
+	width: 30%;
+	float: left;
+	height: 100%;
+	margin-right: 5px;
+	margin-left: 0;
+}
+
+#search-tools {
+	display: inline;
+	width: 100%;
+}
+
+#searchbar {
+	display: inline-block;
+	width: 70%;
+}
+
+#searchray {
+	display: inline-block;
+	width: 23%;
+}
+
+.element {
+	margin: 5px;
+}
+
+.element:hover {
+	background-color: green;
+}
+
+.element:active {
+	background-color: red;
+}
+
+.element-header {
+	border-style: solid;
+}
+
+.element-id {
+	display: inline;
+	padding: 5px;
+	background-color: red;
+	width: 10%;
+	line-height: 20px;
+}
+
+.element-title {
+	display: inline;
+	font-size: 1.3em;
+	padding: 5px;
+	width: 70%;
+	line-height: 20px;
+
+}
+
+.element-content {
+	border: solid;
+}
+
+.element-distance {
+	border: solid;
+}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Ajouter un service</title>
+
+		<script type="text/javascript" langage="javascript" src="js/jquery.js"></script>
+	</head>
+
+	<body>
+		<input type="text" id="name" placeholder="Nom"/>
+		<input type="text" id="description" placeholder="Description"/>
+		<input type="text" id="adress" placeholder="Adresse"/>
+		<input type="text" id="latitude" placeholder="Latitude"/>
+		<input type="text" id="longitude" placeholder="Longitude"/>
+		<input type="text" id="tags" placeholder="Tags"/>
+
+		<input type="button" id="submit" value="enregistrer"/>
+
+		<script type="text/javascript" langage="javascript">
+			$("#submit").click(function() {
+				var name = $("#name").val();
+				var description = $("#description").val();
+				var adress = $("#adress").val();
+				var latitude = $("#latitude").val();
+				var longitude = $("#longitude").val();
+				var tags = $("#tags").val();
+
+				var result = $.ajax({
+					type: "GET",   
+					url: "webservice/addservice.php?name=" + name + "&description=" + description + "&adress=" + adress + "&latitude=" + latitude + "&longitude=" + longitude + "&tags=" + tags,
+					async: false
+				});
+
+				if(result.status) {
+					$(document).attr('location', 'index.html');
+				}		
+			});
+		</script>
+	</body>
+</html>
